@@ -120,6 +120,16 @@
         </joint>
 
         <link name="${name}_pc_optical_frame"/>
+
+        <!-- create virtual frame for showing live camera images -->
+        <joint name="${name}_virtual_camera_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <parent link="${name}_pc_optical_frame"/>
+                <child link="${name}_camera"/>
+        </joint>
+
+        <link name="${name}_camera"/>
+
         <!-- gazebo extensions -->
         <xacro:rc_visard65_depth_gazebo link_name="${name}_pc_link" frame_name="${name}_pc_optical_frame" camera_name="${name}" camera_type="${camera_type}" camera_rate="${camera_rate}" />
 
