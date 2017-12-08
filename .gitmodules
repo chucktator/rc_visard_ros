@@ -1,6 +1,6 @@
 [submodule "ext/rc_dynamics_api"]
 	path = rc_visard_driver/ext/rc_dynamics_api
-	url = ../rc_dynamics_api
+	url = https://github.com/roboception/rc_dynamics_api.git
 [submodule "ext/rc_genicam_api"]
 	path = rc_visard_driver/ext/rc_genicam_api
-	url = ../rc_genicam_api
+	url = https://github.com/roboception/rc_genicam_api.git
