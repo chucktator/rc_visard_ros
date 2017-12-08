@@ -1,8 +1,11 @@
 <launch>
-  <node pkg="nodelet" type="nodelet" name="rc_visard_driver"
+  <group>
+    <remap from="stereo" to="rc_$(arg num)/stereo"/>
+    <node pkg="nodelet" type="nodelet" name="rc_visard_driver"
     args="standalone rc_visard_driver" output="screen">
 
-    <param name="device" value="00_1e_06_32_03_40"/>
-    <param name="access" value="exclusive"/>
-  </node>
+      <param name="device" value="$(arg mac)" />
+      <param name="access" value="exclusive"/>
+    </node>
+  </group>
 </launch>
