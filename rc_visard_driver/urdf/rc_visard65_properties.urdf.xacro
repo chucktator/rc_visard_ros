@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<robot xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+       xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Stereo Camera Location (Nominally 0) -->
+  <xacro:property name="cal_stereo_x" value="0.0" />
+  <xacro:property name="cal_stereo_y" value="0.0" />
+  <xacro:property name="cal_stereo_z" value="0.0" />
+  <xacro:property name="cal_stereo_roll" value="0.0" />
+  <xacro:property name="cal_stereo_pitch" value="0.0" />
+  <xacro:property name="cal_stereo_yaw" value="0.0" />
+
+</robot>

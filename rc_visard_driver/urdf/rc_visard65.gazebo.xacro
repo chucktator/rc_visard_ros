@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:macro name="rc_visard65_stereo_gazebo" params="link_name frame_name camera_name camera_type camera_rate">
+		<xacro:unless value="${camera_type == 'color'}">
+			<xacro:property name="image_topic_suffix" value="" />
+			<xacro:property name="image_format" value="L8" />
+		</xacro:unless>
+		<xacro:if value="${camera_type == 'color'}">
+			<xacro:property name="image_topic_suffix" value="_color" />
+			<xacro:property name="image_format" value="R8G8B8" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '3Hz'}">
+			<xacro:property name="image_rate" value="3.0" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '15Hz'}">
+			<xacro:property name="image_rate" value="15.0" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '25Hz'}">
+			<xacro:property name="image_rate" value="25.0" />
+		</xacro:if>
+		<gazebo reference="${link_name}">
+			<sensor type="multicamera" name="${name}_stereo_camera">
+				<update_rate>${image_rate}</update_rate>
+				<camera name="left">
+					<horizontal_fov>1.06465</horizontal_fov>
+					<image>
+						<width>1280</width>
+						<height>960</height>
+						<format>${image_format}</format>
+					</image>
+					<clip>
+						<near>0.02</near>
+						<far>300</far>
+					</clip>
+					<noise>
+						<type>gaussian</type>
+						<mean>0.0</mean>
+						<stddev>0.007</stddev>
+					</noise>
+				</camera>
+				<camera name="right">
+					<pose>0 -0.065 0 0 0 0</pose>
+					<horizontal_fov>1.06465</horizontal_fov>
+					<image>
+						<width>1280</width>
+						<height>960</height>
+						<format>${image_format}</format>
+					</image>
+					<clip>
+						<near>0.02</near>
+						<far>300</far>
+					</clip>
+					<noise>
+						<type>gaussian</type>
+						<mean>0.0</mean>
+						<stddev>0.007</stddev>
+					</noise>
+				</camera>
+				<plugin name="${link_name}_controller" filename="libgazebo_ros_multicamera.so">
+					<alwaysOn>true</alwaysOn>
+					<updateRate>0.0</updateRate>
+					<cameraName>${camera_name}_stereo</cameraName>
+					<imageTopicName>image_rect</imageTopicName>
+					<cameraInfoTopicName>camera_info</cameraInfoTopicName>
+					<frameName>left_camera_optical_frame</frameName>
+					<!--<rightFrameName>right_camera_optical_frame</rightFrameName>-->
+					<hackBaseline>0.07</hackBaseline>
+					<distortionK1>0.0</distortionK1>
+					<distortionK2>0.0</distortionK2>
+					<distortionK3>0.0</distortionK3>
+					<distortionT1>0.0</distortionT1>
+					<distortionT2>0.0</distortionT2>
+				</plugin>
+			</sensor>
+		</gazebo>
+	</xacro:macro>
+
+	<xacro:macro name="rc_visard65_depth_gazebo" params="link_name frame_name camera_name camera_type camera_rate">
+		<xacro:unless value="${camera_type == 'color'}">
+			<xacro:property name="image_topic_suffix" value="" />
+			<xacro:property name="image_format" value="L8" />
+		</xacro:unless>
+		<xacro:if value="${camera_type == 'color'}">
+			<xacro:property name="image_topic_suffix" value="_color" />
+			<xacro:property name="image_format" value="R8G8B8" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '3Hz'}">
+			<xacro:property name="image_width" value="640" />
+			<xacro:property name="image_height" value="480" />
+			<xacro:property name="image_rate" value="3.0" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '15Hz'}">
+			<xacro:property name="image_width" value="320" />
+			<xacro:property name="image_height" value="240" />
+			<xacro:property name="image_rate" value="15.0" />
+		</xacro:if>
+		<xacro:if value="${camera_rate == '25Hz'}">
+			<xacro:property name="image_width" value="214" />
+			<xacro:property name="image_height" value="160" />
+			<xacro:property name="image_rate" value="25.0" />
+		</xacro:if>
+		<gazebo reference="${link_name}">
+			<sensor type="depth" name="${name}_depth_sensor">
+				<always_on>true</always_on>
+				<update_rate>${image_rate}</update_rate>
+				<camera>
+					<horizontal_fov>1.06465</horizontal_fov>
+					<image>
+						<format>${image_format}</format>
+						<width>${image_width}</width>
+						<height>${image_height}</height>
+					</image>
+					<clip>
+						<near>0.02</near>
+						<far>300</far>
+					</clip>
+				</camera>
+				<plugin name="${link_name}_controller" filename="libgazebo_ros_openni_kinect.so">
+					<baseline>0.2</baseline>
+					<alwaysOn>true</alwaysOn>
+					<updateRate>${image_rate}</updateRate>
+					<cameraName>${camera_name}_depth</cameraName>
+					<!--imageTopicName>/${camera_name}/depth/image_raw</imageTopicName-->
+					<depthImageTopicName>/${camera_name}/stereo/depth</depthImageTopicName>
+					<pointCloudTopicName>/${camera_name}/stereo/points2</pointCloudTopicName>
+					<frameName>${frame_name}</frameName>
+					<pointCloudCutoff>0.5</pointCloudCutoff>
+					<distortionK1>0.00000001</distortionK1>
+					<distortionK2>0.00000001</distortionK2>
+					<distortionK3>0.00000001</distortionK3>
+					<distortionT1>0.00000001</distortionT1>
+					<distortionT2>0.00000001</distortionT2>
+					<CxPrime>0</CxPrime>
+					<Cx>0</Cx>
+					<Cy>0</Cy>
+					<focalLength>0</focalLength>
+					<hackBaseline>0</hackBaseline>
+				</plugin>
+			</sensor>
+		</gazebo>
+	</xacro:macro>
+
+</robot>
