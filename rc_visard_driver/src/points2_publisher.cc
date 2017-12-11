@@ -47,7 +47,7 @@ Points2Publisher::Points2Publisher(ros::NodeHandle &nh, std::string frame_id,
   f=_f;
   t=_t;
   scale=_scale;
-
+  std::cout << "Namespace of rc_visard: " << nh.getNamespace() << std::endl;
   pub=nh.advertise<sensor_msgs::PointCloud2>("points2", 1);
 }
 
