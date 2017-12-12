@@ -2,11 +2,9 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:macro name="rc_visard65_stereo_gazebo" params="link_name frame_name camera_name camera_type camera_rate">
 		<xacro:if value="${camera_type == 'monochrome'}">
-			<xacro:property name="image_topic_suffix" value="" />
 			<xacro:property name="image_format" value="L8" />
 		</xacro:if>
 		<xacro:if value="${camera_type == 'color'}">
-			<xacro:property name="image_topic_suffix" value="_color" />
 			<xacro:property name="image_format" value="R8G8B8" />
 		</xacro:if>
 		<xacro:if value="${camera_rate == '3Hz'}">
@@ -60,7 +58,7 @@
 					<alwaysOn>true</alwaysOn>
 					<updateRate>0.0</updateRate>
 					<cameraName>${camera_name}/stereo/</cameraName>
-					<imageTopicName>image_rect${image_topic_suffix}</imageTopicName>
+					<imageTopicName>image_rect</imageTopicName>
 					<cameraInfoTopicName>camera_info</cameraInfoTopicName>
 					<frameName>left_camera_optical_frame</frameName>
 					<!--<rightFrameName>right_camera_optical_frame</rightFrameName>-->
