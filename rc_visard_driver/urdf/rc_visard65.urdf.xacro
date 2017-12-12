@@ -5,12 +5,12 @@
 
     <!-- rc_visard65 mount assembly -->
     <xacro:macro name="rc_visard65" params="name parent *origin camera_type camera_rate">
-        <joint name="${name}_rc_visard65_joint" type="fixed">
+        <joint name="${name}_joint" type="fixed">
             <xacro:insert_block name="origin" />
             <parent link="${parent}"/>
-            <child link="${name}_rc_visard65_link"/>
+            <child link="${name}_link"/>
         </joint>
-        <link name="${name}_rc_visard65_link">
+        <link name="${name}_link">
             <inertial>
                 <mass value="0.1"/>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -36,12 +36,12 @@
         </link>
 
         <!-- rc_visard65 stereo sensor physical attachment -->
-        <joint name="${name}_rc_visard65_stereo_joint" type="fixed">
-            <origin xyz="-0.023 0.0325 0.0375" rpy="0 0 1.5708"/>
-            <parent link="${name}_rc_visard65_link"/>
-            <child link="${name}_rc_visard65_stereo_link"/>
+        <joint name="${name}_stereo_joint" type="fixed">
+            <origin xyz="-0.0325 0.0325 0.0375" rpy="0 0 1.5708"/>
+            <parent link="${name}_link"/>
+            <child link="${name}_stereo_link"/>
         </joint>
-        <link name="${name}_rc_visard65_stereo_link">
+        <link name="${name}_stereo_link">
             <inertial>
                 <mass value="0.1" />
                 <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -62,26 +62,35 @@
                 </geometry>
             </collision>
         </link>
-        <!-- kinect2 ir sensor frame -->
-        <joint name="${name}_rc_visard65_stereo_optical_frame_joint" type="fixed">
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <parent link="${name}_rc_visard65_stereo_link"/>
-            <child link="${name}_rc_visard65_stereo_optical_frame"/>
+        <!-- rc_visard65 stereo sensor frame -->
+        <joint name="${name}_stereo_optical_frame_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}" />
+            <parent link="${name}_stereo_link"/>
+            <child link="${name}_stereo_optical_frame"/>
         </joint>
 
-        <link name="${name}_rc_visard65_stereo_optical_frame"/>
+        <link name="${name}_stereo_optical_frame"/>
+
+        <joint name="${name}_stereo_right_frame_joint" type="fixed">
+            <origin xyz="0.065 0 0" rpy="0 0 0" />
+            <parent link="${name}_stereo_optical_frame"/>
+            <child link="${name}_stereo_right_optical_frame"/>
+        </joint>
+
+        <link name="${name}_stereo_right_optical_frame"/>
+
         <!-- gazebo extensions -->
-        <xacro:rc_visard65_stereo_gazebo link_name="${name}_rc_visard65_stereo_link" frame_name="${name}_rc_visard65_stereo_optical_frame" camera_name="rc_visard65"
+        <xacro:rc_visard65_stereo_gazebo link_name="${name}_stereo_link" frame_name="${name}_stereo_optical_frame" camera_name="${name}"
             camera_type="${camera_type}" camera_rate="${camera_rate}" />
 
-        <!-- kinect2 rgb sensor physical attachment
-        <joint name="${name}_kinect2_rgb_joint" type="fixed">
-            <origin xyz="0 -0.05175 0" rpy="0 0 0"/>
-            <parent link="${name}_kinect2_ir_link"/>
-            <child link="${name}_kinect2_rgb_link"/>
+        <!-- rc_visard65 point cloud sensor physical attachment -->
+        <joint name="${name}_pc_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <parent link="${name}_stereo_link"/>
+            <child link="${name}_pc_link"/>
         </joint>
 
-        <link name="${name}_kinect2_rgb_link" >
+        <link name="${name}_pc_link" >
             <inertial>
                 <mass value="0.1" />
                 <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -90,8 +99,7 @@
                     izz="0.01" />
             </inertial>
             <visual>
-                <origin xyz="${cal_kinect_x}            ${cal_kinect_y}                 ${cal_kinect_z}"
-                    rpy="${-M_PI/2+cal_kinect_roll} ${0.0+cal_kinect_pitch}         ${-M_PI/2+cal_kinect_yaw}" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
                     <sphere radius="0.0005"/>
                 </geometry>
@@ -102,19 +110,18 @@
                     <sphere radius="0.0005"/>
                 </geometry>
             </collision>
-        </link>-->
+        </link>
 
-        <!-- kinect2 rgb sensor frame
-        <joint name="${name}_kinect2_rgb_optical_frame_joint" type="fixed">
-            <origin xyz="${cal_kinect_x}            ${cal_kinect_y}                 ${cal_kinect_z}"
-                rpy="${-M_PI/2+cal_kinect_roll} ${0.0+cal_kinect_pitch}         ${-M_PI/2+cal_kinect_yaw}" />
-                <parent link="${name}_kinect2_rgb_link"/>
-                <child link="${name}_kinect2_rgb_optical_frame"/>
+        <!-- rc_visard65 point cloud sensor frame -->
+        <joint name="${name}_pc_optical_frame_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}" />
+                <parent link="${name}_pc_link"/>
+                <child link="${name}_pc_optical_frame"/>
         </joint>
 
-        <link name="${name}_kinect2_rgb_optical_frame"/>-->
-        <!-- gazebo extensions
-        <xacro:kinect2_rgb_gazebo_v0 link_name="${name}_kinect2_rgb_link" frame_name="${name}_kinect2_rgb_optical_frame" camera_name="head_mount_kinect2" />-->
+        <link name="${name}_pc_optical_frame"/>
+        <!-- gazebo extensions -->
+        <xacro:rc_visard65_depth_gazebo link_name="${name}_pc_link" frame_name="${name}_pc_optical_frame" camera_name="${name}" camera_type="${camera_type}" camera_rate="${camera_rate}" />
 
     </xacro:macro>
 
