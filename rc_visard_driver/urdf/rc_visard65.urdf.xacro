@@ -19,7 +19,7 @@
                     izz="0.01" />
             </inertial>
             <visual>
-                <origin xyz="-0.023 0.0325 0.0375" rpy="-1.5708 0 0"/>
+                <origin xyz="-0.023 0.0325 0.0375" rpy="-${PI/2} 0 0"/>
                 <geometry>
                     <mesh filename="package://rc_visard_driver/meshes/rc_visard65.stl" scale="0.001 0.001 0.001" />
                 </geometry>
@@ -37,7 +37,7 @@
 
         <!-- rc_visard65 stereo sensor physical attachment -->
         <joint name="${name}_stereo_joint" type="fixed">
-            <origin xyz="-0.0325 0.0325 0.0375" rpy="0 0 1.5708"/>
+            <origin xyz="-0.0325 0.0325 0.0375" rpy="0 0 ${PI/2}"/>
             <parent link="${name}_link"/>
             <child link="${name}_stereo_link"/>
         </joint>
