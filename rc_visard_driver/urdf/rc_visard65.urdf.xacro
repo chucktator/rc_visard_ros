@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:include filename="$(find rc_visard_driver)/urdf/rc_visard65.gazebo.xacro" />
     <xacro:include filename="$(find rc_visard_driver)/urdf/rc_visard65_properties.urdf.xacro" />
 
@@ -23,14 +23,14 @@
                 <geometry>
                     <mesh filename="package://rc_visard_driver/meshes/rc_visard65.stl" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="gray">
-                    <color rgba="0.5 0.5 0.5 1"/>
+                <material name="darkgray">
+                    <color rgba="0.3 0.3 0.3 1"/>
                 </material>
             </visual>
             <collision>
-                <origin xyz="0.0325 0 0.0315" rpy="0 0 0"/>
+                <origin xyz="0 -0.01 0.04" rpy="0 0 0"/>
                 <geometry>
-                    <sphere radius="0.0005"/>
+                    <box size="0.14 0.15 0.08"/>
                 </geometry>
             </collision>
         </link>
