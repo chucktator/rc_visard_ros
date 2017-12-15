@@ -10,4 +10,4 @@ Nodelet/node providing a ROS interface to configure the rc_visard and receive im
 
 See rc_visard_driver/README.md for more details.
 
-[Roboception rc_visard]: http://roboception.com/rc_visard
+[Roboception rc_visard]: http://roboception.com/rc_visard 
