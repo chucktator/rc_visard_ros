@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "depth_publisher.h"
+#include "confidence_publisher.h"
 
 #include <rc_genicam_api/pixel_formats.h>
 
@@ -40,23 +40,21 @@
 namespace rc
 {
 
-DepthPublisher::DepthPublisher(ros::NodeHandle &nh, std::string frame_id,
-                               double f, double t, double _scale)
-        : Publisher(frame_id)
+ConfidencePublisher::ConfidencePublisher(ros::NodeHandle &nh,
+                                         std::string frame_id_prefix)
+        : GenICam2RosPublisher(frame_id_prefix)
 {
-  scale=f*t/_scale;
-
-  pub=nh.advertise<sensor_msgs::Image>("depth", 1);
+  pub=nh.advertise<sensor_msgs::Image>("confidence", 1);
 }
 
-bool DepthPublisher::used()
+bool ConfidencePublisher::used()
 {
   return pub.getNumSubscribers() > 0;
 }
 
-void DepthPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
+void ConfidencePublisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
 {
-  if (pub.getNumSubscribers() > 0 && pixelformat == Coord3D_C16)
+  if (pub.getNumSubscribers() > 0 && pixelformat == Confidence8)
   {
     // create image and initialize header
 
@@ -89,35 +87,13 @@ void DepthPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
     im->data.resize(im->step*im->height);
     float *pt=reinterpret_cast<float *>(&im->data[0]);
 
-    bool bigendian=buffer->isBigEndian();
-
-    float s=scale*im->width;
+    float scale=1.0f/255.0f;
 
     for (uint32_t k=0; k<im->height; k++)
     {
       for (uint32_t i=0; i<im->width; i++)
       {
-        uint16_t d;
-
-        if (bigendian)
-        {
-          d=(ps[0]<<8)|ps[1];
-        }
-        else
-        {
-          d=(ps[1]<<8)|ps[0];
-        }
-
-        ps+=2;
-
-        if (d != 0)
-        {
-          *pt++=s/d;
-        }
-        else
-        {
-          *pt++=std::numeric_limits<float>::quiet_NaN();
-        }
+        *pt++=scale **ps++;
       }
 
       ps+=px;

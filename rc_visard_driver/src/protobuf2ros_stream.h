@@ -31,59 +31,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RC_VISARD_DRIVER_DYNAMICS_PUBLISHER_H
-#define RC_VISARD_DRIVER_DYNAMICS_PUBLISHER_H
+#ifndef RC_VISARD_ROS_PROTOBUF2ROS_STREAM_H
+#define RC_VISARD_ROS_PROTOBUF2ROS_STREAM_H
 
 
 #include <ros/ros.h>
-
-#include <memory>
-#include <thread>
-#include <atomic>
-
 #include <rc_dynamics_api/remote_interface.h>
+
 #include "ThreadedStream.h"
 
 
 namespace rc
 {
 
-
+/**
+ * Implementation of a ThreadedStream that receives rc_visard's dynamics
+ * protobuf messages and re-publishes them as ros messages
+ *
+ * The ros topic is the dynamics stream name; the ros message type is determined
+ * by the protobuf message type of the dynamics stream.
+ */
 class Protobuf2RosStream : public ThreadedStream
 {
   public:
     Protobuf2RosStream(rc::dynamics::RemoteInterface::Ptr rcdIface,
-               const std::string &topic, ros::NodeHandle &nh)
-            : ThreadedStream(rcdIface, topic, nh)
+                       const std::string &stream, ros::NodeHandle &nh,
+                       const std::string &frame_id_prefix)
+            : ThreadedStream(rcdIface, stream, nh), _tfPrefix(frame_id_prefix)
     {}
 
   protected:
-    static ros::Publisher
-    CreateRosPublisherForPbMsgType(const std::string &pbMsgType,
-                                   ros::NodeHandle &nh,
-                                   const std::string &topic);
-
     virtual bool startReceivingAndPublishingAsRos() override;
 
-    virtual void
-    publishProtobufAsRos(std::shared_ptr<::google::protobuf::Message> pbMsg,
-                         ros::Publisher &pub);
+    const std::string _tfPrefix;
 };
 
 
-class PoseStream : public ThreadedStream
+/**
+ * Specific implementation for roboception::msgs::Frame messages. It publishes
+ * received messages not only as ros StampedPoses but also on tf if desired.
+ *
+ * Again, the resulting ros topic is the dynamics stream name.
+ */
+class PoseStream : public Protobuf2RosStream
 {
   public:
     PoseStream(rc::dynamics::RemoteInterface::Ptr rcdIface,
-               const std::string &topic, ros::NodeHandle &nh, bool tfEnabled)
-            : ThreadedStream(rcdIface, topic, nh), _tfEnabled(tfEnabled)
+               const std::string &stream, ros::NodeHandle &nh,
+               const std::string &frame_id_prefix, bool tfEnabled)
+            : Protobuf2RosStream(rcdIface, stream, nh, frame_id_prefix),
+              _tfEnabled(tfEnabled)
     {}
 
+  protected:
     virtual bool startReceivingAndPublishingAsRos() override;
 
-  protected:
     bool _tfEnabled;
 };
 
 }
-#endif //RC_VISARD_DRIVER_DYNAMICS_PUBLISHER_H
+#endif //RC_VISARD_ROS_PROTOBUF2ROS_STREAM_H

@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "disparity_color_publisher.h"
+#include "depth_publisher.h"
 
 #include <rc_genicam_api/pixel_formats.h>
 
@@ -40,28 +40,21 @@
 namespace rc
 {
 
-DisparityColorPublisher::DisparityColorPublisher(image_transport::ImageTransport &it,
-                                                 std::string frame_id,
-                                                 double _scale)
-        : Publisher(frame_id)
+DepthPublisher::DepthPublisher(ros::NodeHandle &nh, std::string frame_id_prefix,
+                               double f, double t, double _scale)
+        : GenICam2RosPublisher(frame_id_prefix)
 {
-  scale=_scale;
-  disprange=0;
+  scale=f*t/_scale;
 
-  pub=it.advertise("disparity_color", 1);
+  pub=nh.advertise<sensor_msgs::Image>("depth", 1);
 }
 
-void DisparityColorPublisher::setDisprange(int _disprange)
-{
-  disprange=_disprange;
-}
-
-bool DisparityColorPublisher::used()
+bool DepthPublisher::used()
 {
   return pub.getNumSubscribers() > 0;
 }
 
-void DisparityColorPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
+void DepthPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
 {
   if (pub.getNumSubscribers() > 0 && pixelformat == Coord3D_C16)
   {
@@ -81,7 +74,6 @@ void DisparityColorPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelf
 
     im->width=static_cast<uint32_t>(buffer->getWidth());
     im->height=static_cast<uint32_t>(buffer->getHeight());
-    im->is_bigendian=rcg::isHostBigEndian();
 
     // get pointer to image data in buffer
 
@@ -90,13 +82,16 @@ void DisparityColorPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelf
 
     // convert image data
 
-    im->encoding=sensor_msgs::image_encodings::RGB8;
-    im->step=3*im->width*sizeof(uint8_t);
+    im->encoding=sensor_msgs::image_encodings::TYPE_32FC1;
+    im->is_bigendian=rcg::isHostBigEndian();
+    im->step=im->width*sizeof(float);
 
     im->data.resize(im->step*im->height);
-    uint8_t *pt=reinterpret_cast<uint8_t *>(&im->data[0]);
+    float *pt=reinterpret_cast<float *>(&im->data[0]);
 
     bool bigendian=buffer->isBigEndian();
+
+    float s=scale*im->width;
 
     for (uint32_t k=0; k<im->height; k++)
     {
@@ -117,22 +112,11 @@ void DisparityColorPublisher::publish(const rcg::Buffer *buffer, uint64_t pixelf
 
         if (d != 0)
         {
-          double v=scale*d/disprange;
-          v=v/1.15+0.1;
-
-          double r=std::max(0.0, std::min(1.0, (1.5 - 4*fabs(v-0.75))));
-          double g=std::max(0.0, std::min(1.0, (1.5 - 4*fabs(v-0.5))));
-          double b=std::max(0.0, std::min(1.0, (1.5 - 4*fabs(v-0.25))));
-
-          *pt++=255*r+0.5;
-          *pt++=255*g+0.5;
-          *pt++=255*b+0.5;
+          *pt++=s/d;
         }
         else
         {
-          *pt++=0;
-          *pt++=0;
-          *pt++=0;
+          *pt++=std::numeric_limits<float>::quiet_NaN();
         }
       }
 

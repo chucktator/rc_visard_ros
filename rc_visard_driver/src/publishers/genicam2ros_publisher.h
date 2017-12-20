@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RC_PUBLISHER_H
-#define RC_PUBLISHER_H
+#ifndef RC_VISARD_ROS_GENICAM2ROS_PUBLISHER_H
+#define RC_VISARD_ROS_GENICAM2ROS_PUBLISHER_H
 
 #include <string>
 
@@ -41,20 +41,24 @@
 namespace rc
 {
 
-class Publisher
+
+/**
+ * Interface for all publishers relating to images, point clouds or
+ * other stereo-camera data
+ */
+class GenICam2RosPublisher
 {
   public:
 
-    Publisher(std::string frame_id) : frame_id(frame_id) {}
-    virtual ~Publisher() {}
-
     /**
-      Returns true if there are subscribers to the topic.
+     * @param frame_id_prefix prefix for frame ids in published ros messages
+     */
+    GenICam2RosPublisher(std::string frame_id_prefix) : frame_id(
+            frame_id_prefix + "camera")
+    {}
 
-      @return True if there are subscribers.
-    */
-
-    virtual bool used()=0;
+    virtual ~GenICam2RosPublisher()
+    {}
 
     /**
       Offers a buffer for publication. It depends on the the kind of buffer
@@ -67,14 +71,23 @@ class Publisher
 
     virtual void publish(const rcg::Buffer *buffer, uint64_t pixelformat)=0;
 
+    /**
+      Returns true if there are subscribers to the topic.
+
+      @return True if there are subscribers.
+    */
+    virtual bool used()=0;
+
   protected:
 
     std::string frame_id;
 
   private:
 
-    Publisher &operator=(const Publisher &); // forbidden
+    GenICam2RosPublisher &operator=(const GenICam2RosPublisher &); // forbidden
 };
+
+
 
 }
 

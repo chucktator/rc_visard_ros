@@ -31,46 +31,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RC_IMAGEPUBLISHER_H
-#define RC_IMAGEPUBLISHER_H
+#ifndef RC_CAMERAINFOPUBLISHER_H
+#define RC_CAMERAINFOPUBLISHER_H
 
-#include "publisher.h"
+#include "genicam2ros_publisher.h"
 
 #include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
 
 namespace rc
 {
 
-class ImagePublisher : public Publisher
+class CameraInfoPublisher : public GenICam2RosPublisher
 {
   public:
 
     /**
       Initialization of publisher.
 
-      @param it    Image transport handle.
-      @param left  True for left and false for right camera.
-      @param color True for sending color instead of monochrome images.
+      @param nh   Node handle.
+      @param f    Focal length, normalized to image width 1.
+      @param t    Baseline in m.
+      @param left True for left and false for right camera.
     */
 
-    ImagePublisher(image_transport::ImageTransport &it, std::string frame_id, bool left, bool color);
+    CameraInfoPublisher(ros::NodeHandle &nh, std::string _frame_id, double f, double t, bool left);
 
-    bool used();
+    bool used() override;
 
-    void publish(const rcg::Buffer *buffer, uint64_t pixelformat);
+    void publish(const rcg::Buffer *buffer, uint64_t pixelformat) override;
 
   private:
 
-    ImagePublisher(const ImagePublisher &); // forbidden
-    ImagePublisher &operator=(const ImagePublisher &); // forbidden
+    CameraInfoPublisher(const CameraInfoPublisher &); // forbidden
+    CameraInfoPublisher &operator=(const CameraInfoPublisher &); // forbidden
 
-    bool left;
-    bool color;
-    uint32_t seq;
+    float f;
 
-    image_transport::Publisher pub;
+    sensor_msgs::CameraInfo info;
+    ros::Publisher pub;
 };
 
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2017 Roboception GmbH
  * All rights reserved
  *
- * Author: Heiko Hirschmueller
+ * Author: Christian Emmerich
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,56 +31,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RC_DISPARITYCOLORPUBLISHER_H
-#define RC_DISPARITYCOLORPUBLISHER_H
 
-#include "publisher.h"
+#ifndef RC_VISARD_DRIVER_PROTOBUF2ROS_CONVERSIONS_H
+#define RC_VISARD_DRIVER_PROTOBUF2ROS_CONVERSIONS_H
 
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/Image.h>
+#include <roboception/msgs/imu.pb.h>
+#include <roboception/msgs/frame.pb.h>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <sensor_msgs/Imu.h>
+#include <tf/transform_datatypes.h>
 
 namespace rc
 {
 
-class DisparityColorPublisher : public Publisher
-{
-  public:
+sensor_msgs::ImuPtr toRosImu(std::shared_ptr<roboception::msgs::Imu> imu);
 
-    /**
-      Initialization of publisher.
+geometry_msgs::PoseStampedPtr toRosPoseStamped(std::shared_ptr<roboception::msgs::Frame> frame);
 
-      @param it    Image transport handle.
-      @param left  True for left and false for right camera.
-      @param color True for sending color instead of monochrome images.
-    */
+geometry_msgs::PoseWithCovarianceStampedPtr toRosPoseWithCovarianceStamped(std::shared_ptr<roboception::msgs::Frame> frame);
 
-    DisparityColorPublisher(image_transport::ImageTransport &it, std::string frame_id, double scale);
+tf::Transform toRosTfTransform(std::shared_ptr<roboception::msgs::Frame> frame);
 
-    /**
-      Set the disparity range for scaling of images.
-
-      @param disprange Disparity range for scaling.
-    */
-
-    void setDisprange(int disprange);
-
-    bool used();
-
-    void publish(const rcg::Buffer *buffer, uint64_t pixelformat);
-
-  private:
-
-    DisparityColorPublisher(const DisparityColorPublisher &); // forbidden
-    DisparityColorPublisher &operator=(const DisparityColorPublisher &); // forbidden
-
-    uint32_t seq;
-    double   scale;
-    int      disprange;
-
-    image_transport::Publisher pub;
-};
+tf::StampedTransform toRosTfStampedTransform(std::shared_ptr<roboception::msgs::Frame> frame);
 
 }
 
-#endif
+#endif //RC_VISARD_DRIVER_PROTOBUF2ROS_CONVERSIONS_H

@@ -2,7 +2,7 @@
  * Copyright (c) 2017 Roboception GmbH
  * All rights reserved
  *
- * Author: Heiko Hirschmueller
+ * Author: Christian Emmerich
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,58 +31,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RC_DISPARITYPUBLISHER_H
-#define RC_DISPARITYPUBLISHER_H
 
-#include "publisher.h"
+#ifndef RC_VISARD_ROS_PROTOBUF2ROS_PUBLISHER_H
+#define RC_VISARD_ROS_PROTOBUF2ROS_PUBLISHER_H
+
 
 #include <ros/ros.h>
-#include <stereo_msgs/DisparityImage.h>
+#include <google/protobuf/message.h>
+
 
 namespace rc
 {
 
-class DisparityPublisher : public Publisher
+
+/**
+ * Generic implementation for publishing protobuf messages to ros
+ */
+class Protobuf2RosPublisher
 {
   public:
 
     /**
-      Initialization of publisher.
-
-      @param nh     Node handle.
-      @param f      Focal length, normalized to image width 1.
-      @param t      Basline in m.
-      @param scale  Factor for raw disparities.
-    */
-
-    DisparityPublisher(ros::NodeHandle &nh, std::string frame_id, double f, double t, double scale);
+     * Internally creates a corresponding ros publisher
+     */
+    Protobuf2RosPublisher(ros::NodeHandle &nh, const std::string &topic,
+                          const std::string &pbMsgType,
+                          const std::string &frame_id_prefix);
 
     /**
-      Set the disparity range for scaling of images.
+      Returns true if there are subscribers to the topic.
 
-      @param disprange Disparity range for scaling.
+      @return True if there are subscribers.
     */
+    virtual bool used();
 
-    void setDisprange(int disprange);
+    /**
+     * Publish the generic protobuf message as a corresponding Ros Message
+     */
+    virtual void publish(std::shared_ptr<::google::protobuf::Message> pbMsg);
 
-    bool used();
-
-    void publish(const rcg::Buffer *buffer, uint64_t pixelformat);
+  protected:
+    ros::Publisher pub; // needs to be constructed properly by child classes
+    const std::string _tfPrefix;
 
   private:
-
-    DisparityPublisher(const DisparityPublisher &); // forbidden
-    DisparityPublisher &operator=(const DisparityPublisher &); // forbidden
-
-    uint32_t seq;
-    double f;
-    double t;
-    float  scale;
-    int    disprange;
-
-    ros::Publisher pub;
+    Protobuf2RosPublisher &
+    operator=(const Protobuf2RosPublisher &); // forbidden
 };
 
 }
 
-#endif
+#endif //RC_VISARD_ROS_PROTOBUF2ROS_PUBLISHER_H

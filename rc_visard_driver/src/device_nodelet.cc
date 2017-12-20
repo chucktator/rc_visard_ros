@@ -32,15 +32,15 @@
  */
 
 #include "device_nodelet.h"
-#include "camera_info_publisher.h"
-#include "image_publisher.h"
-#include "disparity_publisher.h"
-#include "disparity_color_publisher.h"
-#include "depth_publisher.h"
-#include "confidence_publisher.h"
-#include "error_disparity_publisher.h"
-#include "error_depth_publisher.h"
-#include "points2_publisher.h"
+#include "publishers/camera_info_publisher.h"
+#include "publishers/image_publisher.h"
+#include "publishers/disparity_publisher.h"
+#include "publishers/disparity_color_publisher.h"
+#include "publishers/depth_publisher.h"
+#include "publishers/confidence_publisher.h"
+#include "publishers/error_disparity_publisher.h"
+#include "publishers/error_depth_publisher.h"
+#include "publishers/points2_publisher.h"
 
 #include <rc_genicam_api/device.h>
 #include <rc_genicam_api/stream.h>
@@ -68,15 +68,16 @@ namespace rcd = dynamics;
 
 ThreadedStream::Ptr DeviceNodelet::CreateDynamicsStreamOfType(
         rcd::RemoteInterface::Ptr rcdIface,
-        const std::string &stream, ros::NodeHandle& nh, bool tfEnabled)
+        const std::string &stream, ros::NodeHandle& nh,
+        const std::string &frame_id_prefix, bool tfEnabled)
 {
   if (stream=="pose")
   {
-    return ThreadedStream::Ptr(new PoseStream(rcdIface, stream, nh, tfEnabled));
+    return ThreadedStream::Ptr(new PoseStream(rcdIface, stream, nh, frame_id_prefix, tfEnabled));
   }
   if (stream=="pose_ins" || stream=="pose_rt" || stream=="pose_rt_ins" || stream=="imu")
   {
-    return ThreadedStream::Ptr(new Protobuf2RosStream(rcdIface, stream, nh));
+    return ThreadedStream::Ptr(new Protobuf2RosStream(rcdIface, stream, nh, frame_id_prefix));
   }
 
   throw std::runtime_error(std::string("Not yet implemented! Stream type: ") + stream);
@@ -135,13 +136,15 @@ void DeviceNodelet::keepAliveAndRecoverFromFails()
   std::string access="control";
 
   tfEnabled = false;
+  autostartDynamics = autostopDynamics = false;
   std::string ns = tf::strip_leading_slash(ros::this_node::getNamespace());
-  std::string tfprefix = (ns != "") ? ns + "_" : "";
-  tfChildFrame = tfprefix + "camera";
+  tfPrefix = (ns != "") ? ns + "_" : "";
 
   pnh.param("device", device, device);
   pnh.param("gev_access", access, access);
   pnh.param("enable_tf", tfEnabled, tfEnabled);
+  pnh.param("autostart_dynamics", autostartDynamics, autostartDynamics);
+  pnh.param("autostop_dynamics", autostopDynamics, autostopDynamics);
 
   rcg::Device::ACCESS access_id;
   if (access == "exclusive")
@@ -240,6 +243,17 @@ void DeviceNodelet::keepAliveAndRecoverFromFails()
 
         std::string currentIPAddress = rcg::getString(rcgnodemap, "GevCurrentIPAddress", true);
         dynamicsInterface = rcd::RemoteInterface::create(currentIPAddress);
+        if (autostartDynamics)
+        {
+          std_srvs::Trigger::Request dummyreq;
+          std_srvs::Trigger::Response dummyresp;
+          if (!this->startDynamics(dummyreq, dummyresp))
+          { // autostart failed!
+            ROS_ERROR("rc_visard_driver: Could not auto-start dynamics module!");
+            cntConsecutiveRecoveryFails++;
+            continue; // to next trial!
+          }
+        }
 
         // add streaming thread for each available stream on rc_visard device
 
@@ -252,7 +266,7 @@ void DeviceNodelet::keepAliveAndRecoverFromFails()
             if (streamName != "dynamics" && streamName != "dynamics_ins")
             {
               auto newStream = CreateDynamicsStreamOfType(dynamicsInterface, streamName,
-                                                          getNodeHandle(), tfEnabled);
+                                                          getNodeHandle(), tfPrefix, tfEnabled);
               dynamicsStreams->add(newStream);
             }
             else
@@ -291,6 +305,15 @@ void DeviceNodelet::keepAliveAndRecoverFromFails()
     dynamicsStreams->start_all();
   }
 
+  if (autostopDynamics)
+  {
+    std_srvs::Trigger::Request dummyreq;
+    std_srvs::Trigger::Response dummyresp;
+    if (!this->stopDynamics(dummyreq, dummyresp))
+    { // autostop failed!
+      ROS_ERROR("rc_visard_driver: Could not auto-stop dynamics module!");
+    }
+  }
   std::cout << "rc_visard_driver: stopped." << std::endl;
 }
 
@@ -741,26 +764,26 @@ void DeviceNodelet::grab(std::string device, rcg::Device::ACCESS access)
       ros::NodeHandle nh(getNodeHandle(), "stereo");
       image_transport::ImageTransport it(nh);
 
-      CameraInfoPublisher lcaminfo(nh, tfChildFrame, f, t, true);
-      CameraInfoPublisher rcaminfo(nh, tfChildFrame, f, t, false);
+      CameraInfoPublisher lcaminfo(nh, tfPrefix, f, t, true);
+      CameraInfoPublisher rcaminfo(nh, tfPrefix, f, t, false);
 
-      ImagePublisher limage(it, tfChildFrame, true, false);
-      ImagePublisher rimage(it, tfChildFrame, false, false);
+      ImagePublisher limage(it, tfPrefix, true, false);
+      ImagePublisher rimage(it, tfPrefix, false, false);
 
-      DisparityPublisher disp(nh, tfChildFrame, f, t, scale);
-      DisparityColorPublisher cdisp(it, tfChildFrame, scale);
-      DepthPublisher depth(nh, tfChildFrame, f, t, scale);
+      DisparityPublisher disp(nh, tfPrefix, f, t, scale);
+      DisparityColorPublisher cdisp(it, tfPrefix, scale);
+      DepthPublisher depth(nh, tfPrefix, f, t, scale);
 
-      ConfidencePublisher confidence(nh, tfChildFrame);
-      ErrorDisparityPublisher error_disp(nh, tfChildFrame, scale);
-      ErrorDepthPublisher error_depth(nh, tfChildFrame, f, t, scale);
+      ConfidencePublisher confidence(nh, tfPrefix);
+      ErrorDisparityPublisher error_disp(nh, tfPrefix, scale);
+      ErrorDepthPublisher error_depth(nh, tfPrefix, f, t, scale);
 
-      Points2Publisher points2(nh, tfChildFrame, f, t, scale);
+      Points2Publisher points2(nh, tfPrefix, f, t, scale);
 
       // add color image publishers if the camera supports color
 
-      std::shared_ptr<Publisher> limage_color;
-      std::shared_ptr<Publisher> rimage_color;
+      std::shared_ptr<GenICam2RosPublisher> limage_color;
+      std::shared_ptr<GenICam2RosPublisher> rimage_color;
 
       {
         std::vector<std::string> format;
@@ -770,8 +793,8 @@ void DeviceNodelet::grab(std::string device, rcg::Device::ACCESS access)
         {
           if (format[i] == "YCbCr411_8")
           {
-            limage_color=std::shared_ptr<Publisher>(new ImagePublisher(it, tfChildFrame, true, true));
-            rimage_color=std::shared_ptr<Publisher>(new ImagePublisher(it, tfChildFrame, false, true));
+            limage_color=std::make_shared<ImagePublisher>(it, tfPrefix, true, true);
+            rimage_color=std::make_shared<ImagePublisher>(it, tfPrefix, false, true);
             break;
           }
         }
@@ -786,7 +809,8 @@ void DeviceNodelet::grab(std::string device, rcg::Device::ACCESS access)
         stream[0]->open();
         stream[0]->startStreaming();
 
-        ROS_INFO("rc_visard_driver: Image streams ready");
+        ROS_INFO_STREAM("rc_visard_driver: Image streams ready (Package size " <<
+                        rcg::getString(rcgnodemap, "GevSCPSPacketSize") << ")");
 
         // enter grabbing loop
 
@@ -838,7 +862,7 @@ void DeviceNodelet::grab(std::string device, rcg::Device::ACCESS access)
           else if (buffer != 0 && buffer->getIsIncomplete())
           {
             missing=0;
-            ROS_WARN("rc_visard_driver: Received incomplete buffer");
+            ROS_WARN("rc_visard_driver: Received incomplete image buffer");
           }
           else if (buffer == 0)
           {

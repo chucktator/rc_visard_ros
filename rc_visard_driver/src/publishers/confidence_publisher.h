@@ -34,7 +34,7 @@
 #ifndef RC_CONFIDENCEPUBLISHER_H
 #define RC_CONFIDENCEPUBLISHER_H
 
-#include "publisher.h"
+#include "genicam2ros_publisher.h"
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
@@ -42,7 +42,7 @@
 namespace rc
 {
 
-class ConfidencePublisher : public Publisher
+class ConfidencePublisher : public GenICam2RosPublisher
 {
   public:
 
@@ -52,11 +52,11 @@ class ConfidencePublisher : public Publisher
       @param nh    Node handle.
     */
 
-    ConfidencePublisher(ros::NodeHandle &nh, std::string frame_id);
+    ConfidencePublisher(ros::NodeHandle &nh, std::string frame_id_prefix);
 
-    bool used();
+    bool used() override;
 
-    void publish(const rcg::Buffer *buffer, uint64_t pixelformat);
+    void publish(const rcg::Buffer *buffer, uint64_t pixelformat) override;
 
   private:
 
