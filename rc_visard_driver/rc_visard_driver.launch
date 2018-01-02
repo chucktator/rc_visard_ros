@@ -1,14 +1,15 @@
 <launch>
-  <arg name="num" default="1" />
-  <arg name="mac" default="00_14_2d_2c_6f_01" />
-  <group ns="rc_$(arg num)">
-    <!--remap from="stereo" to="rc_$(arg num)/stereo"/-->
-    <node pkg="nodelet" type="nodelet" name="rc_visard_driver"
-    args="standalone rc_visard_driver" output="screen">
-
-      <param name="device" value="$(arg mac)" />
-      <param name="access" value="control" />
-      <param name="enable_tf" value="true" />
-    </node>
-  </group>
+    <arg name="num" default="1" />
+    <arg name="mac" default="00_14_2d_2c_6f_01" />
+    <group ns="rc_$(arg num)">
+        <!--remap from="stereo" to="rc_$(arg num)/stereo"/-->
+        <node pkg="nodelet" type="nodelet" name="rc_visard_driver"
+        args="standalone rc_visard_driver" output="screen">
+            <param name="device" value="$(arg mac)" />
+            <param name="access" value="control" />
+            <param name="autostart_dynamics" value="true" />
+            <param name="autostop_dynamics" value="true" />
+            <param name="enable_tf" value="true" />
+        </node>
+    </group>
 </launch>
