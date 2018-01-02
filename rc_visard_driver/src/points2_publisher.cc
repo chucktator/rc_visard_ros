@@ -101,8 +101,9 @@ void Points2Publisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
         const uint64_t freq=1000000000ul;
 
         p->header.seq=seq++;
-        p->header.stamp.sec=timestamp/freq;
-        p->header.stamp.nsec=timestamp-freq*p->header.stamp.sec;
+        //p->header.stamp.sec=timestamp/freq;
+        //p->header.stamp.nsec=timestamp-freq*p->header.stamp.sec;
+        p->header.stamp = ros::Time::now();
         p->header.frame_id=frame_id;
 
         // set meta data of point cloud

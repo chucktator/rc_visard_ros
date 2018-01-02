@@ -57,7 +57,7 @@
 				<plugin name="${link_name}_controller" filename="libgazebo_ros_multicamera.so">
 					<alwaysOn>true</alwaysOn>
 					<updateRate>0.0</updateRate>
-					<cameraName>${camera_name}/stereo/</cameraName>
+					<cameraName>/${camera_name}/stereo/</cameraName>
 					<imageTopicName>image_rect</imageTopicName>
 					<cameraInfoTopicName>camera_info</cameraInfoTopicName>
 					<frameName>left_camera_optical_frame</frameName>
@@ -121,7 +121,7 @@
 					<imageTopicName>/${camera_name}/rgb/image_raw</imageTopicName>
 					<depthImageTopicName>/${camera_name}/stereo/depth</depthImageTopicName>
 					<pointCloudTopicName>/${camera_name}/stereo/points2</pointCloudTopicName>
-					<frameName>${frame_name}</frameName>
+					<frameName>/${frame_name}</frameName>
 					<pointCloudCutoff>0.3</pointCloudCutoff>
 					<distortionK1>0.00000001</distortionK1>
 					<distortionK2>0.00000001</distortionK2>
