@@ -4,7 +4,7 @@
     <xacro:include filename="$(find rc_visard_driver)/urdf/rc_visard65_properties.urdf.xacro" />
 
     <!-- rc_visard65 mount assembly -->
-    <xacro:macro name="rc_visard65" params="name parent *origin camera_type camera_rate">
+    <xacro:macro name="rc_visard65" params="name parent *origin camera_type camera_rate simulated">
         <joint name="${name}_joint" type="fixed">
             <xacro:insert_block name="origin" />
             <parent link="${parent}"/>
@@ -80,8 +80,10 @@
         <link name="${name}_stereo_right_optical_frame"/>
 
         <!-- gazebo extensions -->
-        <xacro:rc_visard65_stereo_gazebo link_name="${name}_stereo_link" frame_name="${name}_stereo_optical_frame" camera_name="${name}"
-            camera_type="${camera_type}" camera_rate="${camera_rate}" />
+        <xacro:if value="${simulated}">
+            <xacro:rc_visard65_stereo_gazebo link_name="${name}_stereo_link" frame_name="${name}_stereo_optical_frame" camera_name="${name}"
+                camera_type="${camera_type}" camera_rate="${camera_rate}" />
+        </xacro:if>
 
         <!-- rc_visard65 point cloud sensor physical attachment -->
         <joint name="${name}_pc_joint" type="fixed">
@@ -131,7 +133,10 @@
         <link name="${name}_camera"/>
 
         <!-- gazebo extensions -->
-        <xacro:rc_visard65_depth_gazebo link_name="${name}_pc_link" frame_name="${name}_pc_optical_frame" camera_name="${name}" camera_type="${camera_type}" camera_rate="${camera_rate}" />
+        <xacro:if value="${simulated}">
+            <xacro:rc_visard65_depth_gazebo link_name="${name}_pc_link" frame_name="${name}_pc_optical_frame" camera_name="${name}" camera_type="${camera_type}"
+                camera_rate="${camera_rate}" />
+        </xacro:if>
 
     </xacro:macro>
 

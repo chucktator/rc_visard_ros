@@ -98,7 +98,7 @@ void Points2Publisher::publish(const rcg::Buffer *buffer, uint64_t pixelformat)
 
         sensor_msgs::PointCloud2Ptr p=boost::make_shared<sensor_msgs::PointCloud2>();
 
-        const uint64_t freq=1000000000ul;
+        //const uint64_t freq=1000000000ul;
 
         p->header.seq=seq++;
         //p->header.stamp.sec=timestamp/freq;
