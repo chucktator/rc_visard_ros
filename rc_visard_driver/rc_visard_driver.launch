@@ -9,7 +9,7 @@
             <param name="access" value="control" />
             <param name="autostart_dynamics" value="true" />
             <param name="autostop_dynamics" value="true" />
-            <param name="enable_tf" value="true" />
+            <param name="enable_tf" value="false" />
         </node>
     </group>
 </launch>
