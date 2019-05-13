@@ -43,43 +43,44 @@
 
 namespace rc
 {
-
 class Points2Publisher : public GenICam2RosPublisher
 {
-  public:
+public:
+  /**
+    Initialization of publisher for depth errors.
 
-    /**
-      Initialization of publisher for depth errors.
+    @param nh     Node handle.
+    @param f      Focal length, normalized to image width of 1.
+    @param t      Basline in m.
+    @param scale  Factor for raw disparities.
+    @param frame_id Parent frame id of points.
+  */
 
-      @param nh     Node handle.
-      @param f      Focal length, normalized to image width of 1.
-      @param t      Basline in m.
-      @param scale  Factor for raw disparities.
-      @param frame_id Parent frame id of points.
-    */
+  Points2Publisher(ros::NodeHandle& nh, const std::string& frame_id_prefix, double f, double t, double scale);
 
-    Points2Publisher(ros::NodeHandle &nh, std::string frame_id_prefix, double f, double t, double scale);
+  void setOut1Alternate(bool alternate);
 
-    bool used() override;
+  bool used() override;
 
-    void publish(const rcg::Buffer *buffer, uint64_t pixelformat) override;
+  void publish(const rcg::Buffer* buffer, uint32_t part, uint64_t pixelformat) override;
+  void publish(const rcg::Buffer* buffer, uint32_t part, uint64_t pixelformat, bool out1);
 
-  private:
+private:
+  Points2Publisher(const Points2Publisher&);             // forbidden
+  Points2Publisher& operator=(const Points2Publisher&);  // forbidden
 
-    Points2Publisher(const Points2Publisher &); // forbidden
-    Points2Publisher &operator=(const Points2Publisher &); // forbidden
+  rcg::ImageList left_list;
+  rcg::ImageList disp_list;
 
-    rcg::ImageList left_list;
-    rcg::ImageList disp_list;
+  uint32_t seq;
+  float f;
+  float t;
+  float scale;
 
-    uint32_t seq;
-    float f;
-    float t;
-    float scale;
+  uint64_t tolerance_ns;
 
-    ros::Publisher pub;
+  ros::Publisher pub;
 };
-
 }
 
 #endif

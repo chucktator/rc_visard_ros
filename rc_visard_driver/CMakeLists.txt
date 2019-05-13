@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-# Don't set PROJECT_VERSION to empty string when no VERSION is given to project() command.
-if(POLICY CMP0048)
-cmake_policy(SET CMP0048 OLD)
-endif()
-
 project(rc_visard_driver)
 include(cmake/project_version.cmake)
 
@@ -16,8 +11,12 @@ endif ()
 
 # - Standard definitions -
 
+if (CMAKE_MAJOR_VERSION VERSION_LESS "3.1.0")
+  add_definitions(-std=c++11)
+else ()
+  set(CMAKE_CXX_STANDARD 11)
+endif ()
 add_definitions(-Wall)
-add_definitions(-std=c++11)
 add_definitions(-Wno-unknown-pragmas)
 
 # add a target to generate API documentation with Doxygen
@@ -36,10 +35,27 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   geometry_msgs
   tf
+  nav_msgs
+  visualization_msgs
+  message_generation
 )
 
+## Generate services in the 'srv' folder
+add_service_files(
+    FILES
+    GetTrajectory.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+        DEPENDENCIES
+        nav_msgs
+)
+
+
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(RC_GENICAM_API 2.0.0 REQUIRED)
+find_package(RC_DYNAMICS_API 0.8 REQUIRED)
 
 #########################################
 ## Definitions for dynamic reconfigure ##
@@ -59,8 +75,8 @@ generate_dynamic_reconfigure_options(cfg/rc_visard_driver.cfg)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rc_stereocamera
-  CATKIN_DEPENDS nodelet roscpp sensor_msgs geometry_msgs std_srvs
-#  DEPENDS 
+  CATKIN_DEPENDS nodelet roscpp sensor_msgs geometry_msgs std_srvs nav_msgs
+#  DEPENDS
 )
 
 ###########
@@ -71,13 +87,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${RC_GENICAM_API_INCLUDE_DIRS}
+  ${RC_DYNAMICS_API_INCLUDE_DIRS}
 )
-
-add_subdirectory(ext)
-
-# add include dirs from submodules
-include_directories(${RC_GENICAM_API_INCLUDE_DIRS})
-include_directories(${RC_DYNAMICS_API_INCLUDE_DIRS})
 
 add_subdirectory(src)
 
@@ -92,12 +104,15 @@ add_subdirectory(src)
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
         rc_visard_driver_nodelet.xml
-        rc_visard_driver.launch
         README.md
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
+install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ######################################
 ## Define information for packaging ##
 ######################################
+# optionally specify dependencies of the debian package here (comma separated!)
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "rc-genicam-api (>= 2.0.0) | ros-$ENV{ROS_DISTRO}-rc-genicam-api (>= 2.0.0), rc-dynamics-api | ros-$ENV{ROS_DISTRO}-rc-dynamics-api, ros-$ENV{ROS_DISTRO}-image-pipeline, ros-$ENV{ROS_DISTRO}-tf")
+
 include(cmake/package_debian.cmake)

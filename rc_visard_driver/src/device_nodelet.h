@@ -50,78 +50,134 @@
 #include "protobuf2ros_stream.h"
 #include "ThreadedStream.h"
 
+#include <rc_visard_driver/GetTrajectory.h>
+
+#include <diagnostic_updater/diagnostic_updater.h>
 
 namespace rc
 {
-
 class DeviceNodelet : public nodelet::Nodelet
 {
-  public:
+public:
+  DeviceNodelet();
+  virtual ~DeviceNodelet();
 
-    DeviceNodelet();
-    virtual ~DeviceNodelet();
+  virtual void onInit();
 
-    virtual void onInit();
+  /// Trigger stereo matching in mode 'SingleFrame'
+  ///@return always true, check resp.success
+  bool depthAcquisitionTrigger(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Start Stereo INS
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsStart(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Start Stereo INS+SLAM
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsStartSlam(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Restart Stereo INS
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsRestart(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Restart Stereo INS+SLAM
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsRestartSlam(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Stop Stereo INS(+SLAM if running)
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsStop(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Stop SLAM (keep Stereo INS running)
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsStopSlam(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Reset SLAM (keep Stereo INS running)
+  ///@return always true, check resp.success for whether the dynamics service has been called
+  bool dynamicsResetSlam(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Get the Slam trajectory
+  ///@return always true
+  bool getSlamTrajectory(rc_visard_driver::GetTrajectory::Request& req,
+                         rc_visard_driver::GetTrajectory::Response& resp);
+  /// Save the onboard SLAM map
+  ///@return always true, check resp.success for wheter map could be saved
+  bool saveSlamMap(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Load the onboard SLAM map
+  ///@return always true, check resp.success for wheter map could be loaded
+  bool loadSlamMap(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
+  /// Remove the onboard SLAM map
+  ///@return always true, check resp.success for wheter map could be removed
+  bool removeSlamMap(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
 
-    bool startDynamics(std_srvs::Trigger::Request &req,
-                       std_srvs::Trigger::Response &resp);
-    bool restartDynamics(std_srvs::Trigger::Request &req,
-                         std_srvs::Trigger::Response &resp);
-    bool stopDynamics(std_srvs::Trigger::Request &req,
-                      std_srvs::Trigger::Response &resp);
 
-  private:
+private:
+  static ThreadedStream::Ptr CreateDynamicsStreamOfType(rc::dynamics::RemoteInterface::Ptr rcdIface,
+                                                        const std::string& stream, ros::NodeHandle& nh,
+                                                        const std::string& frame_id_prefix, bool tfEnabled);
 
-    static ThreadedStream::Ptr CreateDynamicsStreamOfType(
-            rc::dynamics::RemoteInterface::Ptr rcdIface,
-            const std::string &stream, ros::NodeHandle &nh,
-            const std::string &frame_id_prefix, bool tfEnabled);
+  void initConfiguration(const std::shared_ptr<GenApi::CNodeMapRef>& nodemap,
+                         rc_visard_driver::rc_visard_driverConfig& cfg, rcg::Device::ACCESS access);
 
-    void initConfiguration(const std::shared_ptr<GenApi::CNodeMapRef> &nodemap,
-      rc_visard_driver::rc_visard_driverConfig &cfg, rcg::Device::ACCESS access);
+  void reconfigure(rc_visard_driver::rc_visard_driverConfig& config, uint32_t level);
 
-    void reconfigure(rc_visard_driver::rc_visard_driverConfig &config, uint32_t level);
+  void grab(std::string device, rcg::Device::ACCESS access);
 
-    void grab(std::string device, rcg::Device::ACCESS access);
+  void keepAliveAndRecoverFromFails();
 
-    void keepAliveAndRecoverFromFails();
+  void produce_connection_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void produce_device_diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
-    dynamic_reconfigure::Server<rc_visard_driver::rc_visard_driverConfig> *reconfig;
 
-    bool dev_supports_gain;
-    bool dev_supports_wb;
+  dynamic_reconfigure::Server<rc_visard_driver::rc_visard_driverConfig>* reconfig;
 
-    std::shared_ptr<rcg::Device> rcgdev;
-    std::shared_ptr<GenApi::CNodeMapRef> rcgnodemap;
+  bool dev_supports_gain;
+  bool dev_supports_wb;
+  bool dev_supports_depth_acquisition_trigger;
 
-    std::mutex mtx;
-    rc_visard_driver::rc_visard_driverConfig config;
-    std::atomic_uint_least32_t level;
+  bool perform_depth_acquisition_trigger;
 
-    std::thread imageThread;
-    std::atomic_bool stopImageThread, imageRequested, imageSuccess;
+  std::shared_ptr<rcg::Device> rcgdev;
+  std::shared_ptr<GenApi::CNodeMapRef> rcgnodemap;
 
-    std::thread recoverThread;
-    std::atomic_bool stopRecoverThread;
-    bool recoveryRequested;
-    int cntConsecutiveRecoveryFails;
+  boost::recursive_mutex mtx;
+  bool stereo_plus_avail;
+  bool iocontrol_avail;
+  rc_visard_driver::rc_visard_driverConfig config;
+  std::atomic_uint_least32_t level;
 
-    ThreadedStream::Manager::Ptr dynamicsStreams;
+  std::thread imageThread;
+  std::atomic_bool stopImageThread, imageRequested, imageSuccess;
 
-    /// wrapper for REST-API calls relating to rc_visard's dynamics interface
-    rc::dynamics::RemoteInterface::Ptr dynamicsInterface;
-    ros::ServiceServer dynamicsStartService;
-    ros::ServiceServer dynamicsRestartService;
-    ros::ServiceServer dynamicsStopService;
-    bool autostartDynamics, autostopDynamics;
+  std::thread recoverThread;
+  std::atomic_bool stopRecoverThread;
+  bool recoveryRequested;
+  int cntConsecutiveRecoveryFails;
+  int maxNumRecoveryTrials;
+  bool atLeastOnceSuccessfullyStarted;
 
-    /// all frame names must be prefixed when using more than one rc_visard
-    std::string tfPrefix;
+  ThreadedStream::Manager::Ptr dynamicsStreams;
 
-    /// should poses published also via tf?
-    bool tfEnabled;
+  /// wrapper for REST-API calls relating to rc_visard's dynamics interface
+  ros::ServiceServer depthAcquisitionTriggerService;
+  rc::dynamics::RemoteInterface::Ptr dynamicsInterface;
+  ros::ServiceServer dynamicsStartService;
+  ros::ServiceServer dynamicsStartSlamService;
+  ros::ServiceServer dynamicsRestartService;
+  ros::ServiceServer dynamicsRestartSlamService;
+  ros::ServiceServer dynamicsStopService;
+  ros::ServiceServer dynamicsStopSlamService;
+  ros::ServiceServer dynamicsResetSlamService;
+  ros::ServiceServer getSlamTrajectoryService;
+  ros::ServiceServer slamSaveMapService;
+  ros::ServiceServer slamLoadMapService;
+  ros::ServiceServer slamRemoveMapService;
+  ros::Publisher trajPublisher;
+  bool autostartDynamics, autostopDynamics, autostartSlam, autopublishTrajectory;
+
+  /// all frame names must be prefixed when using more than one rc_visard
+  std::string tfPrefix;
+
+  /// should poses published also via tf?
+  bool tfEnabled;
+
+  /// diagnostics publishing
+  diagnostic_updater::Updater updater;
+  std::string dev_serialno, dev_macaddr, dev_ipaddr, dev_version, gev_userid, gev_packet_size;
+  unsigned int totalIncompleteBuffers, totalImageReceiveTimeouts, totalConnectionLosses;
 };
-
 }
 
 #endif

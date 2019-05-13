@@ -1,10 +1,9 @@
-[submodule "ext/rc_dynamics_api"]
-	path = rc_visard_driver/ext/rc_dynamics_api
-	url = https://github.com/roboception/rc_dynamics_api.git
-	branch = master
-	ignore = untracked
-[submodule "ext/rc_genicam_api"]
-	path = rc_visard_driver/ext/rc_genicam_api
-	url = https://github.com/roboception/rc_genicam_api.git
-	branch = master
-	ignore = untracked
+[submodule "rc_hand_eye_calibration_client/opt/cpr"]
+	path = rc_hand_eye_calibration_client/opt/cpr
+	url = https://github.com/whoshuu/cpr.git
+[submodule "rc_pick_client/opt/cpr"]
+	path = rc_pick_client/opt/cpr
+	url = https://github.com/whoshuu/cpr.git
+[submodule "rc_tagdetect_client/opt/cpr"]
+	path = rc_tagdetect_client/opt/cpr
+	url = https://github.com/whoshuu/cpr.git
