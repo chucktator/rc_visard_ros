@@ -169,33 +169,6 @@ available:
 * `camera_wb_ratio_blue`: Blue to green ratio for color balancing if
   `camera_wb_auto` is false.
 
-
-Gazebo Simulation
------------------
-
-The following topics are provided by the simulated version of the sensor.
-- /stereo/left/camera_info (sensor_msgs::CameraInfo)
-- /stereo/right/camera_info (sensor_msgs::CameraInfo)
-
-- /stereo/left/image_rect (sensor_msgs::Image, MONO8)
-- /stereo/right/image_rect (sensor_msgs::Image, MONO8)
-
-- /stereo/depth (sensor_msgs::Image, TYPE_32FC1)
-
-- /stereo/points2 (sensor_msgs::PointCloud2)
-
-Example Usage in URDF:
-
-    <xacro:rc_visard65 name="rc_1" parent="world" camera_type="color" camera_rate="25Hz">
-        <origin xyz="0 0 0" rpy="${-PI/4} 0 ${PI/4}"/>
-    </xacro:rc_visard65>
-
-Parameters:
-
-- camera_type:  color or monochrome, depending on the camera type published
-- camera_rate:  25Hz, 15Hz or 3Hz as per the documentation, which impacts the resulting image size
-
-
 Provided Topics
 ---------------
 
